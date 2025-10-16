@@ -14,7 +14,7 @@ RUN openssl req -x509 -nodes -days 365 \
     -subj "/C=JP/ST=Tokyo/L=Tokyo/O=MyCompany/OU=Dev/CN=localhost"
 
 # Nginx設定ファイルをコピー
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY ./conf/default.conf /etc/nginx/conf.d/default.conf
 
 # ポート解放
 EXPOSE 443
