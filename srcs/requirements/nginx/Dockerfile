@@ -19,5 +19,7 @@ COPY ./conf/default.conf /etc/nginx/conf.d/default.conf
 # ポート解放
 EXPOSE 443
 
+RUN rm /etc/nginx/sites-enabled/default
+
 # 起動コマンド
 CMD ["nginx", "-g", "daemon off;"]
