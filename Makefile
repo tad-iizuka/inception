@@ -13,9 +13,9 @@ build:
 kill:
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) kill
 down:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --rmi all --volumes --remove-orphans
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down
 clean:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down -v
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --rmi all --volumes --remove-orphans
 
 fclean: clean
 	sudo rm -rf /home/tiizuka/data/mysql
