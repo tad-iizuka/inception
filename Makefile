@@ -6,6 +6,8 @@ all:
 	mkdir -p /home/tiizuka/data/mysql
 	mkdir -p /home/tiizuka/data/wordpress
 	@$(DOCKER_COMPOSE)  -f $(DOCKER_COMPOSE_FILE) up -d --build
+ps:
+	@$(DOCKER_COMPOSE)  -f $(DOCKER_COMPOSE_FILE) ps
 build:
 	@$(DOCKER_COMPOSE)  -f $(DOCKER_COMPOSE_FILE) build
 up:
