@@ -49,8 +49,8 @@ init-env:
 			echo "MARIADB_PASSWORD_FILE=/run/secrets/db_password" >> $(ENV_FILE); \
 			echo "" >> $(ENV_FILE); \
 			echo "# シークレットファイルのホスト側パス" >> $(ENV_FILE); \
-			echo "DB_ROOT_PASSWORD_FILE=./secrets/db_root_password.txt" >> $(ENV_FILE); \
-			echo "DB_PASSWORD_FILE=./secrets/db_password.txt" >> $(ENV_FILE); \
+			echo "DB_ROOT_PASSWORD_FILE=../secrets/db_root_password.txt" >> $(ENV_FILE); \
+			echo "DB_PASSWORD_FILE=../secrets/db_password.txt" >> $(ENV_FILE); \
 			echo "✓ Default .env created"; \
 		fi; \
 	else \
