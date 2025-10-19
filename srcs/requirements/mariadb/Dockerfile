@@ -1,25 +1,39 @@
-FROM mariadb:latest
+FROM debian:latest
 
-# 日本語ロケールの設定
-RUN apt-get update && \
-    apt-get install -y locales && \
-    sed -i -e 's/# ja_JP.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/' /etc/locale.gen && \
-    locale-gen && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
+# 環境変数設定
+ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=ja_JP.UTF-8
 ENV LANGUAGE=ja_JP:ja
 ENV LC_ALL=ja_JP.UTF-8
 
+# MariaDBのインストール
+RUN apt-get update && apt-get install -y \
+    mariadb-server \
+    mariadb-client \
+    locales \
+    && sed -i -e 's/# ja_JP.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/' /etc/locale.gen \
+    && locale-gen \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# MariaDBのデータディレクトリとログディレクトリの作成
+RUN mkdir -p /var/lib/mysql /var/run/mysqld /var/log/mysql \
+    && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld /var/log/mysql \
+    && chmod 755 /var/run/mysqld
+
 # カスタム設定ファイルをコピー
-COPY my.cnf /etc/mysql/conf.d/custom.cnf
+COPY ./conf/my.cnf /etc/mysql/conf.d/custom.cnf
 
-# 初期化スクリプト用のディレクトリ（オプション）
-# COPY init-scripts/ /docker-entrypoint-initdb.d/
+# エントリーポイントスクリプトのコピー
+COPY ./tools/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# ヘルスチェック
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD mysqladmin ping -h localhost -u root -p$(cat /run/secrets/db_root_password) || exit 1
+# 初期化スクリプト用のディレクトリ
+RUN mkdir -p /docker-entrypoint-initdb.d
 
 EXPOSE 3306
+
+VOLUME /var/lib/mysql
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["mysqld"]
