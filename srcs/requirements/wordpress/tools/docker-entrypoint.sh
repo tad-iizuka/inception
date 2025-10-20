@@ -110,8 +110,8 @@ if [ -f /var/www/html/wp-config.php ]; then
         WORDPRESS_ADMIN_EMAIL="${WORDPRESS_ADMIN_EMAIL:-admin@example.com}"
         
         # 管理者パスワードをSecretファイルから読み込み
-        if [ -f "$WORDPRESS_ADMIN_PASSWORD_FILE" ]; then
-            WORDPRESS_ADMIN_PASSWORD=$(cat "$WORDPRESS_ADMIN_PASSWORD_FILE")
+        if [ -f "$WP_ADMIN_PASSWORD_FILE" ]; then
+            WORDPRESS_ADMIN_PASSWORD=$(cat "$WP_ADMIN_PASSWORD_FILE")
             echo "Admin password loaded from secret file"
         else
             WORDPRESS_ADMIN_PASSWORD="${WORDPRESS_ADMIN_PASSWORD:-password42}"
@@ -119,8 +119,8 @@ if [ -f /var/www/html/wp-config.php ]; then
         fi
         
         # 追加ユーザーのパスワードをSecretファイルから読み込み
-        if [ -f "$WORDPRESS_GUEST_PASSWORD_FILE" ]; then
-            WORDPRESS_GUEST_PASSWORD=$(cat "$WORDPRESS_GUEST_PASSWORD_FILE")
+        if [ -f "$WP_GUEST_PASSWORD_FILE" ]; then
+            WORDPRESS_GUEST_PASSWORD=$(cat "$WP_GUEST_PASSWORD_FILE")
             echo "Guest password loaded from secret file"
         else
             WORDPRESS_GUEST_PASSWORD="${WORDPRESS_GUEST_PASSWORD:-password42}"

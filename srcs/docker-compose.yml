@@ -11,8 +11,8 @@ services:
         - db:/var/lib/mysql
         - ./requirements/mariadb/conf/my.cnf:/etc/mysql/my.cnf:ro
       secrets:
-        - db_root_password
-        - db_password
+        - mariadb_root_password
+        - mariadb_password
       networks:
         - net
       restart: on-failure
@@ -28,7 +28,7 @@ services:
       depends_on:
         - mariadb
       secrets:
-        - db_password
+        - mariadb_password
         - wp_admin_password
         - wp_guest_password
       expose:
@@ -67,14 +67,14 @@ volumes:
       device: /home/tiizuka/data/wordpress
 
 secrets:
-  db_root_password:
-    file: ${DB_ROOT_PASSWORD_FILE:-../secrets/db_root_password.txt}
-  db_password:
-    file: ${DB_PASSWORD_FILE:-../secrets/db_password.txt}
+  mariadb_root_password:
+    file: ../secrets/mariadb_root_password.txt
+  mariadb_password:
+    file: ../secrets/mariadb_password.txt
   wp_admin_password:
-    file: ${WP_ADMIN_PASSWORD_FILE:-../secrets/wp_admin_password.txt}
+    file: ../secrets/wp_admin_password.txt
   wp_guest_password:
-    file: ${WP_GUEST_PASSWORD_FILE:-../secrets/wp_guest_password.txt}
+    file: ../secrets/wp_guest_password.txt
 
 networks:
     net:

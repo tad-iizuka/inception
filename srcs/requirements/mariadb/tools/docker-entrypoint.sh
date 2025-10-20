@@ -4,10 +4,12 @@ set -e
 # パスワードファイルから読み込み
 if [ -f "$MARIADB_ROOT_PASSWORD_FILE" ]; then
     MARIADB_ROOT_PASSWORD=$(cat "$MARIADB_ROOT_PASSWORD_FILE")
+    echo "mariadb root password loaded from secret file"
 fi
 
 if [ -f "$MARIADB_PASSWORD_FILE" ]; then
     MARIADB_PASSWORD=$(cat "$MARIADB_PASSWORD_FILE")
+    echo "mariadb password loaded from secret file"
 fi
 
 # パスワードが設定されているか確認

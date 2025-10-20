@@ -1,3 +1,4 @@
+# Penultimate stable version of Debian
 FROM debian:bookworm
 
 # 環境変数設定

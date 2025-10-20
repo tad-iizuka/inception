@@ -12,7 +12,7 @@ ENV_EXAMPLE = ./.env.example
 
 # Default password
 DEFAULT_ROOT_PASSWORD = change_this_root_password
-DEFAULT_DB_PASSWORD = change_this_db_password
+DEFAULT_DB_PASSWORD = change_this_mariadb_password
 FIXED_ADMIN_PASSWORD = password42
 FIXED_GUEST_PASSWORD = password42
 
@@ -43,16 +43,16 @@ init-env:
 
 # Initialize secrets
 init-secrets:
-	@if [ ! -f $(SECRETS_DIR)/db_root_password.txt ]; then \
+	@if [ ! -f $(SECRETS_DIR)/mariadb_root_password.txt ]; then \
 		echo "Creating secret files..."; \
-		echo -n "$(DEFAULT_ROOT_PASSWORD)" > $(SECRETS_DIR)/db_root_password.txt; \
-		echo -n "$(DEFAULT_DB_PASSWORD)" > $(SECRETS_DIR)/db_password.txt; \
+		echo -n "$(DEFAULT_ROOT_PASSWORD)" > $(SECRETS_DIR)/mariadb_root_password.txt; \
+		echo -n "$(DEFAULT_DB_PASSWORD)" > $(SECRETS_DIR)/mariadb_password.txt; \
 		echo -n "$(FIXED_ADMIN_PASSWORD)" > $(SECRETS_DIR)/wp_admin_password.txt; \
 		echo -n "$(FIXED_GUEST_PASSWORD)" > $(SECRETS_DIR)/wp_guest_password.txt; \
 		chmod 600 $(SECRETS_DIR)/*.txt; \
 		echo "⚠ WARNING: Default passwords created. Please change them!"; \
-		echo "  Edit: $(SECRETS_DIR)/db_root_password.txt"; \
-		echo "  Edit: $(SECRETS_DIR)/db_password.txt"; \
+		echo "  Edit: $(SECRETS_DIR)/mariadb_root_password.txt"; \
+		echo "  Edit: $(SECRETS_DIR)/mariadb_password.txt"; \
 		echo "  WP Admin (tiizuka): $(SECRETS_DIR)/wp_admin_password.txt"; \
 		echo "  WP Author (guest): $(SECRETS_DIR)/wp_guest_password.txt"; \
 	else \
@@ -66,27 +66,27 @@ set-permissions:
 	@chmod +x ./srcs/requirements/mariadb/tools/docker-entrypoint.sh 2>/dev/null || true
 	@if [ -f $(ENV_FILE) ]; then chmod 600 $(ENV_FILE); fi
 	@if [ -d $(SECRETS_DIR) ]; then chmod 700 $(SECRETS_DIR); fi
-	@if [ -f $(SECRETS_DIR)/db_root_password.txt ]; then chmod 600 $(SECRETS_DIR)/*.txt; fi
+	@if [ -f $(SECRETS_DIR)/mariadb_root_password.txt ]; then chmod 600 $(SECRETS_DIR)/*.txt; fi
 
 # Generate random password
 generate-passwords:
 	@echo "Generating secure random passwords..."
-	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_root_password.txt
-	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/mariadb_root_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/mariadb_password.txt
 	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/wp_admin_password.txt
 	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/wp_guest_password.txt
 	@chmod 600 $(SECRETS_DIR)/*.txt
 	@echo "✓ Secure passwords generated"
-	@echo "Root password saved to: $(SECRETS_DIR)/db_root_password.txt"
-	@echo "DB password saved to: $(SECRETS_DIR)/db_password.txt"
+	@echo "Root password saved to: $(SECRETS_DIR)/mariadb_root_password.txt"
+	@echo "DB password saved to: $(SECRETS_DIR)/mariadb_password.txt"
 	@echo "WP admin password saved to: $(SECRETS_DIR)/wp_admin_password.txt"
 	@echo "WP guest password saved to: $(SECRETS_DIR)/wp_guest_password.txt"
 
 # Display passwords
 show-passwords:
 	@echo "=== Database Passwords ==="
-	@echo "Root password: $$(cat $(SECRETS_DIR)/db_root_password.txt 2>/dev/null || echo 'Not found')"
-	@echo "DB password: $$(cat $(SECRETS_DIR)/db_password.txt 2>/dev/null || echo 'Not found')"
+	@echo "Root password: $$(cat $(SECRETS_DIR)/mariadb_root_password.txt 2>/dev/null || echo 'Not found')"
+	@echo "DB password: $$(cat $(SECRETS_DIR)/mariadb_password.txt 2>/dev/null || echo 'Not found')"
 	@echo "=== WordPress Passwords ==="
 	@echo "Admin (tiizuka): $$(cat $(SECRETS_DIR)/wp_admin_password.txt 2>/dev/null || echo 'Not found')"
 	@echo "Author (guest): $$(cat $(SECRETS_DIR)/wp_guest_password.txt 2>/dev/null || echo 'Not found')"
@@ -151,13 +151,13 @@ re: fclean init
 test-db:
 	@echo "=== Testing Database Connection ==="
 	@echo "Testing MariaDB..."
-	@docker exec mariadb mysql -u root -p$$(cat $(SECRETS_DIR)/db_root_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ Root connection OK" || echo "✗ Root connection failed"
+	@docker exec mariadb mysql -u root -p$$(cat $(SECRETS_DIR)/mariadb_root_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ Root connection OK" || echo "✗ Root connection failed"
 	@echo ""
 	@echo "Testing WordPress user..."
-	@docker exec mariadb mysql -u wpuser -p$$(cat $(SECRETS_DIR)/db_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress user connection OK" || echo "✗ WordPress user connection failed"
+	@docker exec mariadb mysql -u wpuser -p$$(cat $(SECRETS_DIR)/mariadb_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress user connection OK" || echo "✗ WordPress user connection failed"
 	@echo ""
 	@echo "Testing from WordPress container..."
-	@docker exec wordpress mysql -h mariadb -u wpuser -p$$(cat $(SECRETS_DIR)/db_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress to MariaDB connection OK" || echo "✗ WordPress to MariaDB connection failed"
+	@docker exec wordpress mysql -h mariadb -u wpuser -p$$(cat $(SECRETS_DIR)/mariadb_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress to MariaDB connection OK" || echo "✗ WordPress to MariaDB connection failed"
 
 .PHONY: all init create-dirs init-env init-secrets set-permissions \
         generate-passwords show-passwords show-env \

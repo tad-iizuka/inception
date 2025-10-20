@@ -1,9 +1,10 @@
+# Penultimate stable version of Debian
 FROM debian:bookworm
 
-# 環境変数設定
+# Environment
 ENV DEBIAN_FRONTEND=noninteractive
 
-# MariaDBのインストール
+# Install packages
 RUN apt-get update && apt-get install -y \
     mariadb-server \
     mariadb-client \
@@ -13,24 +14,23 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# MariaDBのデータディレクトリとログディレクトリの作成
+# Create data and log directories
 RUN mkdir -p /var/lib/mysql /var/run/mysqld /var/log/mysql \
     && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld /var/log/mysql \
     && chmod 755 /var/run/mysqld
 
-# カスタム設定ファイルをコピー
+# Copy custome settings
 COPY ./conf/my.cnf /etc/mysql/conf.d/custom.cnf
 
-# エントリーポイントスクリプトのコピー
+# Copy script
 COPY ./tools/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 初期化スクリプト用のディレクトリ
+# Create directory
 RUN mkdir -p /docker-entrypoint-initdb.d
 
+# Port expose
 EXPOSE 3306
-
-VOLUME /var/lib/mysql
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["mysqld"]
