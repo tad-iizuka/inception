@@ -141,7 +141,7 @@ fclean: down clean
 	@sudo rm -rf $(WORDPRESS_DIR)
 	@rm -f $(ENV_FILE)
 	@rm -rf $(SECRETS_DIR)
-	@echo "✓ Full cleanup completed"Cleanup completely Cleanup and init then re-build
+	@echo "✓ Full cleanup completed"
 
 # Cleanup and init then re-build
 re: fclean init
