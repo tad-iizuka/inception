@@ -44,6 +44,12 @@ init-env:
 			echo "WORDPRESS_DB_NAME=wordpress" >> $(ENV_FILE); \
 			echo "WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password" >> $(ENV_FILE); \
 			echo "" >> $(ENV_FILE); \
+			echo "# WordPress サイト設定" >> $(ENV_FILE); \
+			echo "WORDPRESS_SITE_URL=http://localhost:8080" >> $(ENV_FILE); \
+			echo "WORDPRESS_SITE_TITLE=My WordPress Site" >> $(ENV_FILE); \
+			echo "WORDPRESS_ADMIN_EMAIL=admin@example.com" >> $(ENV_FILE); \
+			echo "WORDPRESS_TIMEZONE=Asia/Tokyo" >> $(ENV_FILE); \
+			echo "" >> $(ENV_FILE); \
 			echo "# MariaDB データベース設定" >> $(ENV_FILE); \
 			echo "MARIADB_DATABASE=wordpress" >> $(ENV_FILE); \
 			echo "MARIADB_USER=wpuser" >> $(ENV_FILE); \
@@ -53,6 +59,8 @@ init-env:
 			echo "# シークレットファイルのホスト側パス" >> $(ENV_FILE); \
 			echo "DB_ROOT_PASSWORD_FILE=../secrets/db_root_password.txt" >> $(ENV_FILE); \
 			echo "DB_PASSWORD_FILE=../secrets/db_password.txt" >> $(ENV_FILE); \
+			echo "WP_ADMIN_PASSWORD_FILE=../secrets/wp_admin_password.txt" >> $(ENV_FILE); \
+			echo "WP_GUEST_PASSWORD_FILE=../secrets/wp_guest_password.txt" >> $(ENV_FILE); \
 			echo "✓ Default .env created"; \
 		fi; \
 	else \

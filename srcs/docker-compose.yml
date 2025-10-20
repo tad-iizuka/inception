@@ -71,6 +71,10 @@ secrets:
     file: ${DB_ROOT_PASSWORD_FILE:-../secrets/db_root_password.txt}
   db_password:
     file: ${DB_PASSWORD_FILE:-../secrets/db_password.txt}
+  wp_admin_password:
+    file: ${WP_ADMIN_PASSWORD_FILE:-../secrets/wp_admin_password.txt}
+  wp_guest_password:
+    file: ${WP_GUEST_PASSWORD_FILE:-../secrets/wp_guest_password.txt}
 
 networks:
     net:

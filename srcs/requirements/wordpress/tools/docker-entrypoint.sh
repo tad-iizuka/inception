@@ -101,7 +101,7 @@ find /var/www/html -type f -exec chmod 644 {} \; 2>/dev/null || true
 # WordPress初期設定（wp-cliを使用）
 if [ -f /var/www/html/wp-config.php ]; then
     # WordPressがインストール済みかチェック
-    if ! sudo -u www-data wp core is-installed --path=/var/www/html 2>/dev/null; then
+    if ! wp core is-installed --path=/var/www/html 2>/dev/null; then
         echo "Installing WordPress..."
         
         # 環境変数のデフォルト値設定
@@ -128,7 +128,7 @@ if [ -f /var/www/html/wp-config.php ]; then
         fi
         
         # WordPress コアインストール
-        sudo -u www-data wp core install \
+        wp core install \
             --path=/var/www/html \
             --url="$WORDPRESS_SITE_URL" \
             --title="$WORDPRESS_SITE_TITLE" \
@@ -140,11 +140,11 @@ if [ -f /var/www/html/wp-config.php ]; then
         echo "WordPress core installed successfully!"
         
         # 言語設定を英語に
-        sudo -u www-data wp language core install en_US --activate --path=/var/www/html
+        wp language core install en_US --activate --path=/var/www/html
         echo "Language set to English (en_US)"
         
         # 追加ユーザー（Author）の作成
-        sudo -u www-data wp user create guest guest@example.com \
+        wp user create guest guest@example.com \
             --role=author \
             --user_pass="$WORDPRESS_GUEST_PASSWORD" \
             --path=/var/www/html \
@@ -154,14 +154,14 @@ if [ -f /var/www/html/wp-config.php ]; then
         
         # タイムゾーン設定
         WORDPRESS_TIMEZONE="${WORDPRESS_TIMEZONE:-Asia/Tokyo}"
-        sudo -u www-data wp option update timezone_string "$WORDPRESS_TIMEZONE" --path=/var/www/html
+        wp option update timezone_string "$WORDPRESS_TIMEZONE" --path=/var/www/html
         echo "Timezone set to: $WORDPRESS_TIMEZONE"
         
         # パーマリンク設定を投稿名ベースに
-        sudo -u www-data wp rewrite structure '/%postname%/' --path=/var/www/html
+        wp rewrite structure '/%postname%/' --path=/var/www/html
         
         # デフォルトテーマの有効化（Twenty Twenty-Four等の最新テーマ）
-        sudo -u www-data wp theme activate $(sudo -u www-data wp theme list --status=inactive --field=name --path=/var/www/html | head -n 1) --path=/var/www/html 2>/dev/null || true
+        wp theme activate $(wp theme list --status=inactive --field=name --path=/var/www/html | head -n 1) --path=/var/www/html 2>/dev/null || true
         
         echo "WordPress initial setup completed!"
         echo "=========================================="
