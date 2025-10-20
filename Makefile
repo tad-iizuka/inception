@@ -1,7 +1,8 @@
+# Docker definition
 DOCKER_COMPOSE = docker compose
 DOCKER_COMPOSE_FILE = ./srcs/docker-compose.yml
 
-# パス設定
+# Path settings
 DATA_DIR = /home/tiizuka/data
 MYSQL_DIR = $(DATA_DIR)/mysql
 WORDPRESS_DIR = $(DATA_DIR)/wordpress
@@ -9,65 +10,38 @@ SECRETS_DIR = ./secrets
 ENV_FILE = ./srcs/.env
 ENV_EXAMPLE = ./.env.example
 
-# デフォルトのパスワード（本番環境では変更推奨）
+# Default password
 DEFAULT_ROOT_PASSWORD = change_this_root_password
 DEFAULT_DB_PASSWORD = change_this_db_password
 FIXED_ADMIN_PASSWORD = password42
 FIXED_GUEST_PASSWORD = password42
 
+# Initialize and build
 all: init
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
 
-# 初期化（ディレクトリ、.env、シークレット作成）
+# Initialize
 init: create-dirs init-env init-secrets set-permissions generate-passwords
 	@echo "✓ Initialization completed!"
 
-# データディレクトリ作成
+# Create directories
 create-dirs:
 	@echo "Creating data directories..."
 	@mkdir -p $(MYSQL_DIR)
 	@mkdir -p $(WORDPRESS_DIR)
 	@mkdir -p $(SECRETS_DIR)
 
-# .envファイルの初期化
+# .env initialize
 init-env:
 	@if [ ! -f $(ENV_FILE) ]; then \
 		echo "Creating .env file..."; \
-		if [ -f $(ENV_EXAMPLE) ]; then \
-			cp $(ENV_EXAMPLE) $(ENV_FILE); \
-			echo "✓ .env created from .env.example"; \
-		else \
-			echo "Creating default .env file..."; \
-			echo "# WordPress データベース設定" > $(ENV_FILE); \
-			echo "WORDPRESS_DB_HOST=mariadb:3306" >> $(ENV_FILE); \
-			echo "WORDPRESS_DB_USER=wpuser" >> $(ENV_FILE); \
-			echo "WORDPRESS_DB_NAME=wordpress" >> $(ENV_FILE); \
-			echo "WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password" >> $(ENV_FILE); \
-			echo "" >> $(ENV_FILE); \
-			echo "# WordPress サイト設定" >> $(ENV_FILE); \
-			echo "WORDPRESS_SITE_URL=http://localhost:8080" >> $(ENV_FILE); \
-			echo "WORDPRESS_SITE_TITLE=My WordPress Site" >> $(ENV_FILE); \
-			echo "WORDPRESS_ADMIN_EMAIL=admin@example.com" >> $(ENV_FILE); \
-			echo "WORDPRESS_TIMEZONE=Asia/Tokyo" >> $(ENV_FILE); \
-			echo "" >> $(ENV_FILE); \
-			echo "# MariaDB データベース設定" >> $(ENV_FILE); \
-			echo "MARIADB_DATABASE=wordpress" >> $(ENV_FILE); \
-			echo "MARIADB_USER=wpuser" >> $(ENV_FILE); \
-			echo "MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password" >> $(ENV_FILE); \
-			echo "MARIADB_PASSWORD_FILE=/run/secrets/db_password" >> $(ENV_FILE); \
-			echo "" >> $(ENV_FILE); \
-			echo "# シークレットファイルのホスト側パス" >> $(ENV_FILE); \
-			echo "DB_ROOT_PASSWORD_FILE=../secrets/db_root_password.txt" >> $(ENV_FILE); \
-			echo "DB_PASSWORD_FILE=../secrets/db_password.txt" >> $(ENV_FILE); \
-			echo "WP_ADMIN_PASSWORD_FILE=../secrets/wp_admin_password.txt" >> $(ENV_FILE); \
-			echo "WP_GUEST_PASSWORD_FILE=../secrets/wp_guest_password.txt" >> $(ENV_FILE); \
-			echo "✓ Default .env created"; \
-		fi; \
+		cp $(ENV_EXAMPLE) $(ENV_FILE); \
+		echo "✓ .env created from .env.example"; \
 	else \
 		echo "✓ .env already exists"; \
 	fi
 
-# シークレットファイルの初期化
+# Initialize secrets
 init-secrets:
 	@if [ ! -f $(SECRETS_DIR)/db_root_password.txt ]; then \
 		echo "Creating secret files..."; \
@@ -85,7 +59,7 @@ init-secrets:
 		echo "✓ Secret files already exist"; \
 	fi
 
-# パーミッション設定
+# Permission settings
 set-permissions:
 	@echo "Setting permissions..."
 	@chmod +x ./srcs/requirements/wordpress/tools/docker-entrypoint.sh 2>/dev/null || true
@@ -94,21 +68,21 @@ set-permissions:
 	@if [ -d $(SECRETS_DIR) ]; then chmod 700 $(SECRETS_DIR); fi
 	@if [ -f $(SECRETS_DIR)/db_root_password.txt ]; then chmod 600 $(SECRETS_DIR)/*.txt; fi
 
-# ランダムパスワード生成
+# Generate random password
 generate-passwords:
 	@echo "Generating secure random passwords..."
-	@openssl rand -base64 32 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_root_password.txt
-	@openssl rand -base64 32 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_password.txt
-	@echo -n "$(FIXED_ADMIN_PASSWORD)" > $(SECRETS_DIR)/wp_admin_password.txt
-	@echo -n "$(FIXED_GUEST_PASSWORD)" > $(SECRETS_DIR)/wp_guest_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_root_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/wp_admin_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/wp_guest_password.txt
 	@chmod 600 $(SECRETS_DIR)/*.txt
 	@echo "✓ Secure passwords generated"
 	@echo "Root password saved to: $(SECRETS_DIR)/db_root_password.txt"
 	@echo "DB password saved to: $(SECRETS_DIR)/db_password.txt"
-	@echo "⚠ WARNING: You must rebuild containers after changing passwords!"
-	@echo "  Run: make re"
+	@echo "WP admin password saved to: $(SECRETS_DIR)/wp_admin_password.txt"
+	@echo "WP guest password saved to: $(SECRETS_DIR)/wp_guest_password.txt"
 
-# パスワード表示
+# Display passwords
 show-passwords:
 	@echo "=== Database Passwords ==="
 	@echo "Root password: $$(cat $(SECRETS_DIR)/db_root_password.txt 2>/dev/null || echo 'Not found')"
@@ -116,12 +90,13 @@ show-passwords:
 	@echo "=== WordPress Passwords ==="
 	@echo "Admin (tiizuka): $$(cat $(SECRETS_DIR)/wp_admin_password.txt 2>/dev/null || echo 'Not found')"
 	@echo "Author (guest): $$(cat $(SECRETS_DIR)/wp_guest_password.txt 2>/dev/null || echo 'Not found')"
-# 環境変数表示
+
+# Display .env
 show-env:
 	@echo "=== Environment Variables ==="
 	@cat $(ENV_FILE) 2>/dev/null || echo ".env file not found"
 
-# Docker操作
+# Docker control
 ps:
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) ps
 
@@ -144,14 +119,14 @@ restart:
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) restart
 
 logs:
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) logs -f
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) logs
 
-# ヘルスチェック
+# Container health check
 health:
 	@echo "=== Container Health Status ==="
 	@docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "nginx|wordpress|mariadb|NAMES"
 
-# クリーンアップ（データは保持）
+# Cleanup (Data retained)
 clean:
 	@echo "Stopping and removing containers..."
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --rmi all --volumes --remove-orphans
@@ -159,20 +134,20 @@ clean:
 	@docker system prune -f
 	@echo "✓ Cleanup completed (data preserved)"
 
-# 完全クリーンアップ（データも削除）
+# Cleanup completely
 fclean: down clean
 	@echo "Removing data directories..."
 	@sudo rm -rf $(MYSQL_DIR)
 	@sudo rm -rf $(WORDPRESS_DIR)
 	@rm -f $(ENV_FILE)
 	@rm -rf $(SECRETS_DIR)
-	@echo "✓ Full cleanup completed"
+	@echo "✓ Full cleanup completed"Cleanup completely Cleanup and init then re-build
 
-# 再初期化（クリーンアップ後に初期化）
+# Cleanup and init then re-build
 re: fclean init
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
 
-# データベース接続テスト
+# Check database connection
 test-db:
 	@echo "=== Testing Database Connection ==="
 	@echo "Testing MariaDB..."
@@ -184,42 +159,7 @@ test-db:
 	@echo "Testing from WordPress container..."
 	@docker exec wordpress mysql -h mariadb -u wpuser -p$$(cat $(SECRETS_DIR)/db_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress to MariaDB connection OK" || echo "✗ WordPress to MariaDB connection failed"
 
-# ヘルプ
-help:
-	@echo "=== WordPress Docker Environment - Makefile Commands ==="
-	@echo ""
-	@echo "初期化コマンド:"
-	@echo "  make init              - 環境を初期化（ディレクトリ、.env、シークレット作成）"
-	@echo "  make generate-passwords - ランダムなセキュアパスワードを生成"
-	@echo ""
-	@echo "ビルド・起動:"
-	@echo "  make all               - 初期化してビルド＆起動"
-	@echo "  make build             - イメージをビルド"
-	@echo "  make up                - コンテナを起動"
-	@echo ""
-	@echo "停止・再起動:"
-	@echo "  make stop              - コンテナを停止"
-	@echo "  make kill              - コンテナを強制停止"
-	@echo "  make restart           - コンテナを再起動"
-	@echo "  make down              - コンテナを停止して削除"
-	@echo ""
-	@echo "情報確認:"
-	@echo "  make ps                - コンテナ一覧を表示"
-	@echo "  make logs              - ログをリアルタイム表示"
-	@echo "  make health            - ヘルスステータスを表示"
-	@echo "  make show-env          - 環境変数を表示"
-	@echo "  make show-passwords    - パスワードを表示"
-	@echo "  make test-db           - データベース接続をテスト"
-	@echo ""
-	@echo "クリーンアップ:"
-	@echo "  make clean             - コンテナとイメージを削除（データ保持）"
-	@echo "  make fclean            - データも含めて完全削除（確認あり）"
-	@echo "  make fclean-force      - データも含めて完全削除（確認なし）"
-	@echo "  make reset             - .envとシークレットも含めて完全リセット"
-	@echo "  make rebuild           - データ保持して再構築"
-	@echo "  make re                - 完全削除後に再構築"
-
 .PHONY: all init create-dirs init-env init-secrets set-permissions \
         generate-passwords show-passwords show-env \
         ps build up kill stop down restart logs health \
-        clean fclean re test-db help
+        clean fclean re test-db
