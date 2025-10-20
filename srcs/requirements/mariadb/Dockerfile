@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:bookworm
 
 # 環境変数設定
 ENV DEBIAN_FRONTEND=noninteractive
