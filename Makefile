@@ -74,8 +74,8 @@ init-secrets:
 # パーミッション設定
 set-permissions:
 	@echo "Setting permissions..."
-	@chmod +x ./srcs/requirements/wordpress/docker-entrypoint.sh 2>/dev/null || true
-	@chmod +x ./srcs/requirements/mariadb/docker-entrypoint.sh 2>/dev/null || true
+	@chmod +x ./srcs/requirements/wordpress/tools/docker-entrypoint.sh 2>/dev/null || true
+	@chmod +x ./srcs/requirements/mariadb/tools/docker-entrypoint.sh 2>/dev/null || true
 	@if [ -f $(ENV_FILE) ]; then chmod 600 $(ENV_FILE); fi
 	@if [ -d $(SECRETS_DIR) ]; then chmod 700 $(SECRETS_DIR); fi
 	@if [ -f $(SECRETS_DIR)/db_root_password.txt ]; then chmod 600 $(SECRETS_DIR)/*.txt; fi
@@ -89,6 +89,8 @@ generate-passwords:
 	@echo "✓ Secure passwords generated"
 	@echo "Root password saved to: $(SECRETS_DIR)/db_root_password.txt"
 	@echo "DB password saved to: $(SECRETS_DIR)/db_password.txt"
+	@echo "⚠ WARNING: You must rebuild containers after changing passwords!"
+	@echo "  Run: make re"
 
 # パスワード表示
 show-passwords:
@@ -131,28 +133,64 @@ health:
 	@echo "=== Container Health Status ==="
 	@docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "nginx|wordpress|mariadb|NAMES"
 
-# クリーンアップ
+# クリーンアップ（データは保持）
 clean:
+	@echo "Stopping and removing containers..."
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down --rmi all --volumes --remove-orphans
+	@echo "Pruning Docker system..."
+	@docker system prune -f
+	@echo "✓ Cleanup completed (data preserved)"
 
+# 完全クリーンアップ（データも削除）
 fclean: clean
+	@echo "⚠ WARNING: This will delete all persistent data!"
+	@printf "Are you sure? [y/N] "; \
+	read REPLY; \
+	case "$REPLY" in \
+		[Yy]*) \
+			echo "Removing data directories..."; \
+			sudo rm -rf $(MYSQL_DIR); \
+			sudo rm -rf $(WORDPRESS_DIR); \
+			echo "✓ Full cleanup completed" \
+			;; \
+		*) \
+			echo "Cancelled." \
+			;; \
+	esac
+
+# データのみクリーンアップ（強制版：確認なし）
+fclean-force: clean
 	@echo "Removing data directories..."
 	@sudo rm -rf $(MYSQL_DIR)
 	@sudo rm -rf $(WORDPRESS_DIR)
-	@echo "Pruning Docker system..."
-	@docker system prune -a -f
 	@echo "✓ Full cleanup completed"
 
 # 完全リセット（.envとシークレットも削除）
-reset: fclean
+reset: fclean-force
 	@echo "Removing .env and secrets..."
 	@rm -f $(ENV_FILE)
 	@rm -rf $(SECRETS_DIR)
 	@echo "✓ Complete reset finished. Run 'make init' to reinitialize."
 
-# 再初期化（クリーンアップ後に初期化）
-re: fclean init
+# 再初期化（データ保持）
+rebuild: clean init
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
+
+# 再初期化（クリーンアップ後に初期化）
+re: fclean-force init
+	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
+
+# データベース接続テスト
+test-db:
+	@echo "=== Testing Database Connection ==="
+	@echo "Testing MariaDB..."
+	@docker exec mariadb mysql -u root -p$$(cat $(SECRETS_DIR)/db_root_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ Root connection OK" || echo "✗ Root connection failed"
+	@echo ""
+	@echo "Testing WordPress user..."
+	@docker exec mariadb mysql -u wpuser -p$$(cat $(SECRETS_DIR)/db_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress user connection OK" || echo "✗ WordPress user connection failed"
+	@echo ""
+	@echo "Testing from WordPress container..."
+	@docker exec wordpress mysql -h mariadb -u wpuser -p$$(cat $(SECRETS_DIR)/db_password.txt) -e "SHOW DATABASES;" 2>/dev/null && echo "✓ WordPress to MariaDB connection OK" || echo "✗ WordPress to MariaDB connection failed"
 
 # ヘルプ
 help:
@@ -179,14 +217,18 @@ help:
 	@echo "  make health            - ヘルスステータスを表示"
 	@echo "  make show-env          - 環境変数を表示"
 	@echo "  make show-passwords    - パスワードを表示"
+	@echo "  make test-db           - データベース接続をテスト"
 	@echo ""
 	@echo "クリーンアップ:"
-	@echo "  make clean             - コンテナとイメージを削除"
-	@echo "  make fclean            - データディレクトリも含めて完全削除"
+	@echo "  make clean             - コンテナとイメージを削除（データ保持）"
+	@echo "  make fclean            - データも含めて完全削除（確認あり）"
+	@echo "  make fclean-force      - データも含めて完全削除（確認なし）"
 	@echo "  make reset             - .envとシークレットも含めて完全リセット"
+	@echo "  make rebuild           - データ保持して再構築"
 	@echo "  make re                - 完全削除後に再構築"
 
 .PHONY: all init create-dirs init-env init-secrets set-permissions \
         generate-passwords show-passwords show-env \
         ps build up kill stop down restart logs health \
-        clean fclean reset re help
+        clean fclean fclean-force reset rebuild re test-db help
+				

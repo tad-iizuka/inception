@@ -16,22 +16,6 @@ services:
       - wordpress
     restart: on-failure
 
-  wordpress:
-      build:  ./requirements/wordpress
-      image:  wordpress
-      container_name: wordpress
-      env_file:
-        - .env
-      volumes:
-        - wp:/var/www/html
-      depends_on:
-        - mariadb
-      secrets:
-        - db_password
-      expose:
-        - "9000"
-      restart: on-failure
-
   mariadb:
       build:  ./requirements/mariadb
       image:  mariadb
@@ -50,6 +34,22 @@ services:
         timeout: 3s
         retries: 3
         start_period: 40s
+      restart: on-failure
+
+  wordpress:
+      build:  ./requirements/wordpress
+      image:  wordpress
+      container_name: wordpress
+      env_file:
+        - .env
+      volumes:
+        - wp:/var/www/html
+      depends_on:
+        - mariadb
+      secrets:
+        - db_password
+      expose:
+        - "9000"
       restart: on-failure
 
 volumes:
