@@ -98,6 +98,84 @@ chown -R www-data:www-data /var/www/html
 find /var/www/html -type d -exec chmod 755 {} \; 2>/dev/null || true
 find /var/www/html -type f -exec chmod 644 {} \; 2>/dev/null || true
 
+# WordPress初期設定（wp-cliを使用）
+if [ -f /var/www/html/wp-config.php ]; then
+    # WordPressがインストール済みかチェック
+    if ! sudo -u www-data wp core is-installed --path=/var/www/html 2>/dev/null; then
+        echo "Installing WordPress..."
+        
+        # 環境変数のデフォルト値設定
+        WORDPRESS_SITE_URL="${WORDPRESS_SITE_URL:-http://localhost:8080}"
+        WORDPRESS_SITE_TITLE="${WORDPRESS_SITE_TITLE:-My WordPress Site}"
+        WORDPRESS_ADMIN_EMAIL="${WORDPRESS_ADMIN_EMAIL:-admin@example.com}"
+        
+        # 管理者パスワードをSecretファイルから読み込み
+        if [ -f "$WORDPRESS_ADMIN_PASSWORD_FILE" ]; then
+            WORDPRESS_ADMIN_PASSWORD=$(cat "$WORDPRESS_ADMIN_PASSWORD_FILE")
+            echo "Admin password loaded from secret file"
+        else
+            WORDPRESS_ADMIN_PASSWORD="${WORDPRESS_ADMIN_PASSWORD:-password42}"
+            echo "Admin password loaded from environment variable or default"
+        fi
+        
+        # 追加ユーザーのパスワードをSecretファイルから読み込み
+        if [ -f "$WORDPRESS_GUEST_PASSWORD_FILE" ]; then
+            WORDPRESS_GUEST_PASSWORD=$(cat "$WORDPRESS_GUEST_PASSWORD_FILE")
+            echo "Guest password loaded from secret file"
+        else
+            WORDPRESS_GUEST_PASSWORD="${WORDPRESS_GUEST_PASSWORD:-password42}"
+            echo "Guest password loaded from environment variable or default"
+        fi
+        
+        # WordPress コアインストール
+        sudo -u www-data wp core install \
+            --path=/var/www/html \
+            --url="$WORDPRESS_SITE_URL" \
+            --title="$WORDPRESS_SITE_TITLE" \
+            --admin_user=tiizuka \
+            --admin_password="$WORDPRESS_ADMIN_PASSWORD" \
+            --admin_email="$WORDPRESS_ADMIN_EMAIL" \
+            --skip-email
+        
+        echo "WordPress core installed successfully!"
+        
+        # 言語設定を英語に
+        sudo -u www-data wp language core install en_US --activate --path=/var/www/html
+        echo "Language set to English (en_US)"
+        
+        # 追加ユーザー（Author）の作成
+        sudo -u www-data wp user create guest guest@example.com \
+            --role=author \
+            --user_pass="$WORDPRESS_GUEST_PASSWORD" \
+            --path=/var/www/html \
+            --porcelain
+        
+        echo "Author user 'guest' created successfully!"
+        
+        # タイムゾーン設定
+        WORDPRESS_TIMEZONE="${WORDPRESS_TIMEZONE:-Asia/Tokyo}"
+        sudo -u www-data wp option update timezone_string "$WORDPRESS_TIMEZONE" --path=/var/www/html
+        echo "Timezone set to: $WORDPRESS_TIMEZONE"
+        
+        # パーマリンク設定を投稿名ベースに
+        sudo -u www-data wp rewrite structure '/%postname%/' --path=/var/www/html
+        
+        # デフォルトテーマの有効化（Twenty Twenty-Four等の最新テーマ）
+        sudo -u www-data wp theme activate $(sudo -u www-data wp theme list --status=inactive --field=name --path=/var/www/html | head -n 1) --path=/var/www/html 2>/dev/null || true
+        
+        echo "WordPress initial setup completed!"
+        echo "=========================================="
+        echo "Admin User: tiizuka"
+        echo "Admin Password: (from secret or env)"
+        echo "Author User: guest"
+        echo "Author Password: (from secret or env)"
+        echo "Site URL: $WORDPRESS_SITE_URL"
+        echo "=========================================="
+    else
+        echo "WordPress is already installed. Skipping initial setup."
+    fi
+fi
+
 echo "Starting PHP-FPM..."
 
 # PHP-FPM実行ファイルを検索して起動

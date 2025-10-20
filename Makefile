@@ -12,6 +12,8 @@ ENV_EXAMPLE = ./.env.example
 # デフォルトのパスワード（本番環境では変更推奨）
 DEFAULT_ROOT_PASSWORD = change_this_root_password
 DEFAULT_DB_PASSWORD = change_this_db_password
+FIXED_ADMIN_PASSWORD = password42
+FIXED_GUEST_PASSWORD = password42
 
 all: init
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
@@ -63,10 +65,14 @@ init-secrets:
 		echo "Creating secret files..."; \
 		echo -n "$(DEFAULT_ROOT_PASSWORD)" > $(SECRETS_DIR)/db_root_password.txt; \
 		echo -n "$(DEFAULT_DB_PASSWORD)" > $(SECRETS_DIR)/db_password.txt; \
+		echo -n "$(FIXED_ADMIN_PASSWORD)" > $(SECRETS_DIR)/wp_admin_password.txt; \
+		echo -n "$(FIXED_GUEST_PASSWORD)" > $(SECRETS_DIR)/wp_guest_password.txt; \
 		chmod 600 $(SECRETS_DIR)/*.txt; \
 		echo "⚠ WARNING: Default passwords created. Please change them!"; \
 		echo "  Edit: $(SECRETS_DIR)/db_root_password.txt"; \
 		echo "  Edit: $(SECRETS_DIR)/db_password.txt"; \
+		echo "  WP Admin (tiizuka): $(SECRETS_DIR)/wp_admin_password.txt"; \
+		echo "  WP Author (guest): $(SECRETS_DIR)/wp_guest_password.txt"; \
 	else \
 		echo "✓ Secret files already exist"; \
 	fi
@@ -85,6 +91,8 @@ generate-passwords:
 	@echo "Generating secure random passwords..."
 	@openssl rand -base64 32 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_root_password.txt
 	@openssl rand -base64 32 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/db_password.txt
+	@echo -n "$(FIXED_ADMIN_PASSWORD)" > $(SECRETS_DIR)/wp_admin_password.txt
+	@echo -n "$(FIXED_GUEST_PASSWORD)" > $(SECRETS_DIR)/wp_guest_password.txt
 	@chmod 600 $(SECRETS_DIR)/*.txt
 	@echo "✓ Secure passwords generated"
 	@echo "Root password saved to: $(SECRETS_DIR)/db_root_password.txt"
@@ -97,7 +105,9 @@ show-passwords:
 	@echo "=== Database Passwords ==="
 	@echo "Root password: $$(cat $(SECRETS_DIR)/db_root_password.txt 2>/dev/null || echo 'Not found')"
 	@echo "DB password: $$(cat $(SECRETS_DIR)/db_password.txt 2>/dev/null || echo 'Not found')"
-
+	@echo "=== WordPress Passwords ==="
+	@echo "Admin (tiizuka): $$(cat $(SECRETS_DIR)/wp_admin_password.txt 2>/dev/null || echo 'Not found')"
+	@echo "Author (guest): $$(cat $(SECRETS_DIR)/wp_guest_password.txt 2>/dev/null || echo 'Not found')"
 # 環境変数表示
 show-env:
 	@echo "=== Environment Variables ==="

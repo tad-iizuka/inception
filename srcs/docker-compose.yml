@@ -46,6 +46,8 @@ services:
         - mariadb
       secrets:
         - db_password
+        - wp_admin_password
+        - wp_guest_password
       expose:
         - "9000"
       networks:
