@@ -2,9 +2,6 @@ FROM debian:latest
 
 # 環境変数設定
 ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=ja_JP.UTF-8
-ENV LANGUAGE=ja_JP:ja
-ENV LC_ALL=ja_JP.UTF-8
 
 # MariaDBのインストール
 RUN apt-get update && apt-get install -y \
