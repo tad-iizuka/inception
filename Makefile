@@ -17,7 +17,7 @@ all: init
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
 
 # 初期化（ディレクトリ、.env、シークレット作成）
-init: create-dirs init-env init-secrets set-permissions
+init: create-dirs init-env init-secrets set-permissions generate-passwords
 	@echo "✓ Initialization completed!"
 
 # データディレクトリ作成
@@ -143,41 +143,15 @@ clean:
 
 # 完全クリーンアップ（データも削除）
 fclean: clean
-	@echo "⚠ WARNING: This will delete all persistent data!"
-	@printf "Are you sure? [y/N] "; \
-	read REPLY; \
-	case "$REPLY" in \
-		[Yy]*) \
-			echo "Removing data directories..."; \
-			sudo rm -rf $(MYSQL_DIR); \
-			sudo rm -rf $(WORDPRESS_DIR); \
-			echo "✓ Full cleanup completed" \
-			;; \
-		*) \
-			echo "Cancelled." \
-			;; \
-	esac
-
-# データのみクリーンアップ（強制版：確認なし）
-fclean-force: clean
 	@echo "Removing data directories..."
 	@sudo rm -rf $(MYSQL_DIR)
 	@sudo rm -rf $(WORDPRESS_DIR)
-	@echo "✓ Full cleanup completed"
-
-# 完全リセット（.envとシークレットも削除）
-reset: fclean-force
-	@echo "Removing .env and secrets..."
 	@rm -f $(ENV_FILE)
 	@rm -rf $(SECRETS_DIR)
-	@echo "✓ Complete reset finished. Run 'make init' to reinitialize."
-
-# 再初期化（データ保持）
-rebuild: clean init
-	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
+	@echo "✓ Full cleanup completed"
 
 # 再初期化（クリーンアップ後に初期化）
-re: fclean-force init
+re: fclean init
 	@$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up -d --build
 
 # データベース接続テスト
@@ -230,5 +204,5 @@ help:
 .PHONY: all init create-dirs init-env init-secrets set-permissions \
         generate-passwords show-passwords show-env \
         ps build up kill stop down restart logs health \
-        clean fclean fclean-force reset rebuild re test-db help
+        clean fclean ｘre test-db help
 				
