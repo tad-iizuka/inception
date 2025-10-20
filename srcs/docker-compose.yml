@@ -14,6 +14,8 @@ services:
       - wp:/var/www/html:ro
     depends_on:
       - wordpress
+    networks:
+      - net
     restart: on-failure
 
   mariadb:
@@ -28,12 +30,8 @@ services:
       secrets:
         - db_root_password
         - db_password
-      healthcheck:
-        test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$$(cat /run/secrets/db_root_password)"]
-        interval: 30s
-        timeout: 3s
-        retries: 3
-        start_period: 40s
+      networks:
+        - net
       restart: on-failure
 
   wordpress:
@@ -50,6 +48,8 @@ services:
         - db_password
       expose:
         - "9000"
+      networks:
+        - net
       restart: on-failure
 
 volumes:
@@ -69,3 +69,7 @@ secrets:
     file: ${DB_ROOT_PASSWORD_FILE:-../secrets/db_root_password.txt}
   db_password:
     file: ${DB_PASSWORD_FILE:-../secrets/db_password.txt}
+
+networks:
+    net:
+        driver: bridge
