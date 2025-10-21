@@ -29,7 +29,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Create directory
 RUN mkdir -p /docker-entrypoint-initdb.d
 
-# Port expose
+# Expose port
 EXPOSE 3306
 
 ENTRYPOINT ["docker-entrypoint.sh"]

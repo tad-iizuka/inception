@@ -1,26 +1,30 @@
 # Penultimate stable version of Debian
 FROM debian:bookworm
 
-# OpenSSLとNginxをインストール
-RUN apt-get update && apt-get install -y nginx openssl && apt-get clean
+# Install packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nginx openssl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# SSLディレクトリ作成
+# Create SSL directory
 RUN mkdir -p /etc/nginx/ssl
 
-# 自己署名証明書を自動生成
+# Generate self-signed SSL certificate (valid for 1 year)
 RUN openssl req -x509 -nodes -days 365 \
     -newkey rsa:2048 \
     -keyout /etc/nginx/ssl/server.key \
     -out /etc/nginx/ssl/server.crt \
-    -subj "/C=JP/ST=Tokyo/L=Tokyo/O=MyCompany/OU=Dev/CN=localhost"
+    -subj "/C=FR/ST=IDF/L=Paris/O=42/OU=42/CN=tiizuka.42.fr"
 
-# Nginx設定ファイルをコピー
+# Copy nginx configuration
 COPY ./conf/default.conf /etc/nginx/conf.d/default.conf
 
-# ポート解放
+# Remove the default site configuration if it exists
+RUN rm -f /etc/nginx/sites-enabled/default
+
+# Expose HTTPS port
 EXPOSE 443
 
-RUN rm /etc/nginx/sites-enabled/default
-
-# 起動コマンド
+# Start Nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
