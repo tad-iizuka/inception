@@ -1,7 +1,9 @@
 #!/bin/bash
+
+# Quit script when error happen
 set -e
 
-# パスワードファイルから読み込み
+# Read password
 if [ -f "$MARIADB_ROOT_PASSWORD_FILE" ]; then
     MARIADB_ROOT_PASSWORD=$(cat "$MARIADB_ROOT_PASSWORD_FILE")
     echo "mariadb root password loaded from secret file"
@@ -12,13 +14,13 @@ if [ -f "$MARIADB_PASSWORD_FILE" ]; then
     echo "mariadb password loaded from secret file"
 fi
 
-# パスワードが設定されているか確認
+# Check whether password is set
 if [ -z "$MARIADB_ROOT_PASSWORD" ]; then
     echo "Error: MARIADB_ROOT_PASSWORD is not set"
     exit 1
 fi
 
-# 初期化が必要かチェック
+# Check whether database init is necessary
 NEEDS_INIT=false
 NEEDS_USER_SETUP=false
 
@@ -32,18 +34,15 @@ fi
 
 if [ "$NEEDS_INIT" = true ]; then
     echo "Initializing MariaDB database..."
-    
-    # データベースの初期化
     mysql_install_db --user=mysql --datadir=/var/lib/mysql
 fi
 
+# Initialize database
 if [ "$NEEDS_INIT" = true ] || [ "$NEEDS_USER_SETUP" = true ]; then
-    # 一時的にMariaDBを起動
     echo "Starting temporary MariaDB instance..."
     mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking &
     MYSQL_PID=$!
-    
-    # MariaDBが起動するまで待機
+
     echo "Waiting for MariaDB to start..."
     for i in {60..0}; do
         if mysqladmin ping -h localhost --silent 2>/dev/null; then
@@ -59,31 +58,27 @@ if [ "$NEEDS_INIT" = true ] || [ "$NEEDS_USER_SETUP" = true ]; then
     fi
     
     echo "MariaDB started successfully"
-    
-    # セキュリティ設定とユーザー作成
     echo "Setting up database and users..."
     
     if [ "$NEEDS_INIT" = true ]; then
-        # 完全な初期化
         mysql <<-EOSQL
-			-- rootパスワードの設定
+			-- setting root password
 			ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
 			CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MARIADB_ROOT_PASSWORD}';
 			GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 			
-			-- 不要なユーザーの削除
+			-- delete users
 			DROP DATABASE IF EXISTS test;
 			DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 			DELETE FROM mysql.user WHERE User='';
 		EOSQL
     fi
-    
-    # データベースとユーザーの設定（常に実行）
+
     mysql -u root -p"${MARIADB_ROOT_PASSWORD}" <<-EOSQL
-		-- データベースの作成
+		-- create database
 		CREATE DATABASE IF NOT EXISTS \`${MARIADB_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 		
-		-- ユーザーの作成（既存があれば削除）
+		-- create user
 		DROP USER IF EXISTS '${MARIADB_USER}'@'%';
 		DROP USER IF EXISTS '${MARIADB_USER}'@'localhost';
 		
@@ -100,15 +95,13 @@ if [ "$NEEDS_INIT" = true ] || [ "$NEEDS_USER_SETUP" = true ]; then
         echo "Database and user created successfully"
         echo "Database: ${MARIADB_DATABASE}"
         echo "User: ${MARIADB_USER}@%"
-        
-        # マーカーファイルを作成
+
         touch /var/lib/mysql/.user_setup_complete
     else
         echo "Failed to create database and user"
         exit 1
     fi
-    
-    # 一時起動したMariaDBを停止
+
     echo "Stopping temporary MariaDB instance..."
     if ! kill -s TERM "$MYSQL_PID" || ! wait "$MYSQL_PID"; then
         echo "MariaDB shutdown failed"
@@ -120,6 +113,6 @@ else
     echo "MariaDB fully initialized and configured"
 fi
 
-# 通常起動
+# Start mariadb
 echo "Starting MariaDB server..."
 exec mysqld --user=mysql --datadir=/var/lib/mysql --bind-address=0.0.0.0 --console
