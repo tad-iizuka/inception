@@ -91,13 +91,6 @@ WPCONFIG
         chown www-data:www-data /var/www/html/wp-config.php
         chmod 640 /var/www/html/wp-config.php
         echo "wp-config.php created successfully!"
-
-        wp plugin install redis-cache --activate --allow-root
-        wp plugin update --all --allow-root
-        wp redis enable --allow-root
-        echo "redis settings completed successfully!"
-
-WPCONFIG
     fi
 fi
 
@@ -142,6 +135,12 @@ if [ -f /var/www/html/wp-config.php ]; then
             --allow-root
         
         echo "WordPress core installed successfully!"
+
+        echo "Installing Redis Cache plugin..."
+        wp plugin install redis-cache --activate --allow-root
+        wp plugin update --all --allow-root
+        wp redis enable --allow-root
+        echo "Redis Cache plugin installed and enabled!"
 
         wp language core install en_US --activate --path=/var/www/html --allow-root
         echo "Language set to English (en_US)"
