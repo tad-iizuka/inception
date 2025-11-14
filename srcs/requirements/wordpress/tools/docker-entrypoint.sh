@@ -72,7 +72,7 @@ if [ ! -f /var/www/html/wp-config.php ]; then
             define('WP_DEBUG', false);
             define('WP_REDIS_HOST', 'redis');
             define('WP_REDIS_PORT', 6379);
-            define('WP_CACHE_KEY_SALT', 'tiizuka.42.fr');
+            define('WP_CACHE_KEY_SALT', '${DOMAIN_NAME}');
             define('WP_REDIS_CLIENT', 'phpredis');
 
             if ( ! defined( 'ABSPATH' ) ) {
@@ -87,6 +87,7 @@ WPCONFIG
         sed -i "s/\${WORDPRESS_DB_USER}/${WORDPRESS_DB_USER}/g" /var/www/html/wp-config.php
         sed -i "s/\${WORDPRESS_DB_PASSWORD}/${WORDPRESS_DB_PASSWORD}/g" /var/www/html/wp-config.php
         sed -i "s/\${WORDPRESS_DB_HOST}/${WORDPRESS_DB_HOST}/g" /var/www/html/wp-config.php
+        sed -i "s/\${DOMAIN_NAME}/${DOMAIN_NAME}/g" /var/www/html/wp-config.php
         
         chown www-data:www-data /var/www/html/wp-config.php
         chmod 640 /var/www/html/wp-config.php
