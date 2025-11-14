@@ -15,6 +15,7 @@ DEFAULT_ROOT_PASSWORD = change_this_root_password
 DEFAULT_DB_PASSWORD = change_this_mariadb_password
 FIXED_ADMIN_PASSWORD = password42
 FIXED_GUEST_PASSWORD = password42
+DEFAULT_FTP_PASSWORD = password42
 
 # Initialize and build
 all: init
@@ -49,12 +50,14 @@ init-secrets:
 		echo -n "$(DEFAULT_DB_PASSWORD)" > $(SECRETS_DIR)/mariadb_password.txt; \
 		echo -n "$(FIXED_ADMIN_PASSWORD)" > $(SECRETS_DIR)/wp_admin_password.txt; \
 		echo -n "$(FIXED_GUEST_PASSWORD)" > $(SECRETS_DIR)/wp_guest_password.txt; \
+		echo -n "$(DEFAULT_FTP_PASSWORD)" > $(SECRETS_DIR)/ftp_password.txt; \
 		chmod 600 $(SECRETS_DIR)/*.txt; \
 		echo "⚠ WARNING: Default passwords created. Please change them!"; \
 		echo "  Edit: $(SECRETS_DIR)/mariadb_root_password.txt"; \
 		echo "  Edit: $(SECRETS_DIR)/mariadb_password.txt"; \
 		echo "  WP Admin (tiizuka): $(SECRETS_DIR)/wp_admin_password.txt"; \
 		echo "  WP Author (guest): $(SECRETS_DIR)/wp_guest_password.txt"; \
+		echo "  FTP: $(SECRETS_DIR)/ftp_password.txt"; \
 	else \
 		echo "✓ Secret files already exist"; \
 	fi
@@ -75,12 +78,14 @@ generate-passwords:
 	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/mariadb_password.txt
 	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/wp_admin_password.txt
 	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/wp_guest_password.txt
+	@openssl rand -base64 12 | tr -d '/+' | tr -d '\n' > $(SECRETS_DIR)/ftp_password.txt
 	@chmod 600 $(SECRETS_DIR)/*.txt
 	@echo "✓ Secure passwords generated"
 	@echo "Root password saved to: $(SECRETS_DIR)/mariadb_root_password.txt"
 	@echo "DB password saved to: $(SECRETS_DIR)/mariadb_password.txt"
 	@echo "WP admin password saved to: $(SECRETS_DIR)/wp_admin_password.txt"
 	@echo "WP guest password saved to: $(SECRETS_DIR)/wp_guest_password.txt"
+	@echo "FTP password saved to: $(SECRETS_DIR)/ftp_password.txt"
 
 # Display passwords
 show-passwords:
@@ -90,6 +95,8 @@ show-passwords:
 	@echo "=== WordPress Passwords ==="
 	@echo "Admin (tiizuka): $$(cat $(SECRETS_DIR)/wp_admin_password.txt 2>/dev/null || echo 'Not found')"
 	@echo "Author (guest): $$(cat $(SECRETS_DIR)/wp_guest_password.txt 2>/dev/null || echo 'Not found')"
+	@echo "=== FTP Passwords ==="
+	@echo "FTP: $$(cat $(SECRETS_DIR)/ftp_password.txt 2>/dev/null || echo 'Not found')"
 
 # Display .env
 show-env:

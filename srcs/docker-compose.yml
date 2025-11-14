@@ -2,40 +2,40 @@ version: "3.9"
 
 services:
   mariadb:
-      build:  ./requirements/mariadb
-      image:  mariadb
-      container_name: mariadb
-      env_file:
-        - .env
-      volumes:
-        - db:/var/lib/mysql
-        - ./requirements/mariadb/conf/my.cnf:/etc/mysql/my.cnf:ro
-      secrets:
-        - mariadb_root_password
-        - mariadb_password
-      networks:
-        - net
-      restart: on-failure
+    build:  ./requirements/mariadb
+    image:  mariadb
+    container_name: mariadb
+    env_file:
+      - .env
+    volumes:
+      - db:/var/lib/mysql
+      - ./requirements/mariadb/conf/my.cnf:/etc/mysql/my.cnf:ro
+    secrets:
+      - mariadb_root_password
+      - mariadb_password
+    networks:
+      - net
+    restart: on-failure
 
   wordpress:
-      build:  ./requirements/wordpress
-      image:  wordpress
-      container_name: wordpress
-      env_file:
-        - .env
-      volumes:
-        - wp:/var/www/html
-      depends_on:
-        - mariadb
-      secrets:
-        - mariadb_password
-        - wp_admin_password
-        - wp_guest_password
-      expose:
-        - "9000"
-      networks:
-        - net
-      restart: on-failure
+    build:  ./requirements/wordpress
+    image:  wordpress
+    container_name: wordpress
+    env_file:
+      - .env
+    volumes:
+      - wp:/var/www/html
+    depends_on:
+      - mariadb
+    secrets:
+      - mariadb_password
+      - wp_admin_password
+      - wp_guest_password
+    expose:
+      - "9000"
+    networks:
+      - net
+    restart: on-failure
 
   nginx:
     build:  ./requirements/nginx
@@ -55,29 +55,48 @@ services:
     restart: on-failure
 
   redis:
-      build:  ./requirements/bonus/redis
-      image:  redis
-      container_name: redis
-      depends_on:
-        - wordpress
-      ports:
-      - "6379:6379"
-      env_file:
-        - .env
-      volumes:
-        - wp:/var/www/html
-      networks:
-        - net
-      restart: on-failure
+    build:  ./requirements/bonus/redis
+    image:  redis
+    container_name: redis
+    depends_on:
+      - wordpress
+    ports:
+    - "6379:6379"
+    env_file:
+      - .env
+    volumes:
+      - wp:/var/www/html
+    networks:
+      - net
+    restart: on-failure
+
+  ftp:
+    build: ./requirements/bonus/ftp
+    image:  ftp
+    container_name: ftp
+    depends_on:
+      - wordpress
+    secrets:
+      - ftp_password
+    ports:
+      - "21:21"
+      - "50000-50010:50000-50010"
+    env_file:
+      - .env
+    volumes:
+      - wp:/var/www/html
+    networks:
+      - net
+    restart: on-failure
 
 volumes:
   db:
-   driver_opts:
+    driver_opts:
       type: 'none'
       o: bind
       device: /home/tiizuka/data/mysql
   wp:
-   driver_opts:
+    driver_opts:
       type: 'none'
       o: bind
       device: /home/tiizuka/data/wordpress
@@ -91,7 +110,9 @@ secrets:
     file: ../secrets/wp_admin_password.txt
   wp_guest_password:
     file: ../secrets/wp_guest_password.txt
+  ftp_password:
+    file: ../secrets/ftp_password.txt
 
 networks:
-    net:
-        driver: bridge
+  net:
+    driver: bridge
