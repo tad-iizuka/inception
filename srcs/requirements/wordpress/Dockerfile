@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     php-soap \
     php-xmlrpc \
     php-opcache \
+    php-redis \
     vim \
     wget \
     curl \

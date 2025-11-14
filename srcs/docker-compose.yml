@@ -54,6 +54,22 @@ services:
       - net
     restart: on-failure
 
+  redis:
+      build:  ./requirements/bonus/redis
+      image:  redis
+      container_name: redis
+      depends_on:
+        - wordpress
+      ports:
+      - "6379:6379"
+      env_file:
+        - .env
+      volumes:
+        - wp:/var/www/html
+      networks:
+        - net
+      restart: on-failure
+
 volumes:
   db:
    driver_opts:
