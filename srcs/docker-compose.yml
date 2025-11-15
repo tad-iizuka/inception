@@ -116,6 +116,21 @@ services:
       - net
     restart: on-failure
 
+  cadvisor:
+    build: ./requirements/bonus/cadvisor
+    image: cadvisor
+    container_name: cadvisor
+    ports:
+       - "8000:8080"
+    networks:
+     - net
+    volumes:
+      - /:/rootfs
+      - /var/run:/var/run
+      - /sys:/sys
+      - /var/lib/docker/:/var/lib/docker
+    restart: on-failure
+
 volumes:
   db:
     driver_opts:
