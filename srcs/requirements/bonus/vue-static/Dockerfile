@@ -2,7 +2,7 @@
 FROM debian:bookworm
 
 # Install packages
-RUN apt-get update && \
+RUN apt-get update && apt-get install -y nginx && \
     apt-get install -y tzdata && \
     ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
     echo "Asia/Tokyo" > /etc/timezone && \

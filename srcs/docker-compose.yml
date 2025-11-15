@@ -105,6 +105,8 @@ services:
     build: ./requirements/bonus/vue-static
     image: vue-static
     container_name: vue-static
+    depends_on:
+      - nginx
     ports:
       - "8443:443"
     volumes:
