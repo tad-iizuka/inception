@@ -89,6 +89,18 @@ services:
       - net
     restart: on-failure
 
+  adminer:
+    build: ./requirements/bonus/adminer
+    image: adminer
+    container_name: adminer
+    networks:
+      - net
+    depends_on:
+      - mariadb
+    ports:
+      - "8080:8080"
+    restart: on-failure
+
 volumes:
   db:
     driver_opts:
