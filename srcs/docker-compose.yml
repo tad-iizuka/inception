@@ -112,7 +112,7 @@ services:
     volumes:
       - ./requirements/bonus/vue-static/vue-app/dist:/usr/share/nginx/html:ro
       - ./requirements/bonus/vue-static/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./requirements/nginx/ssl:/etc/nginx/ssl:ro
+      - ./requirements/bonus/vue-static/ssl:/etc/nginx/ssl:ro
     networks:
       - net
     restart: on-failure
