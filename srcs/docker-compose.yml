@@ -101,6 +101,20 @@ services:
       - "8080:8080"
     restart: on-failure
 
+  vue-static:
+    build: ./requirements/bonus/vue-static
+    image: vue-static
+    container_name: vue-static
+    ports:
+      - "8443:443"
+    volumes:
+      - ./requirements/bonus/vue-static/vue-app/dist:/usr/share/nginx/html:ro
+      - ./requirements/bonus/vue-static/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./requirements/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - net
+    restart: on-failure
+
 volumes:
   db:
     driver_opts:
